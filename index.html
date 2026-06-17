@@ -50,5 +50,360 @@
     </section>
   </main>
 
+  <section class="records-section">
+    <div class="parallax-background"></div>
+    
+    <div class="records-container">
+      <div class="music-menu">
+        <h3>Music Menu</h3>
+        <div class="record-list">
+          <div class="record-card" data-audio="big empty.mp3" data-cover-title="Big Empty" data-cover-artist="Stone Temple Pilots" data-cover-image="big empty album cover.jpg">
+            <div class="record">
+              <div class="vinyl-record"></div>
+            </div>
+            <p class="record-label">Big Empty - Stone Temple Pilots</p>
+          </div>
+          <div class="record-card" data-audio="santeria.mp3" data-cover-title="Santeria" data-cover-artist="Sublime" data-cover-image="santeria album cover.jpg">
+            <div class="record">
+              <div class="vinyl-record"></div>
+            </div>
+            <p class="record-label">Santeria - Sublime</p>
+          </div>
+          <div class="record-card" data-audio="Fake Plastic Trees.mp3" data-cover-title="Fake Plastic Trees" data-cover-artist="Radiohead" data-cover-image="fake plastic trees album cover.jpeg">
+            <div class="record">
+              <div class="vinyl-record"></div>
+            </div>
+            <p class="record-label">Fake Plastic Trees - Radiohead</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="album-cover-display" aria-hidden="true">
+      <div class="album-art"></div>
+      <div class="album-cover-info">
+        <p class="cover-title"></p>
+        <p class="cover-artist"></p>
+      </div>
+    </div>
+
+    <svg class="instruction-cloud" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 50 70 Q 30 70 20 55 Q 10 40 25 30 Q 35 15 50 15 Q 60 5 75 10 Q 90 5 95 20 Q 110 10 120 25 Q 135 15 145 30 Q 160 40 155 55 Q 150 70 135 75 Q 120 80 100 80 Q 80 85 60 80 Z" 
+            fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+
+    <p class="instruction-text">Drag and drop the vinyls into the record player to listen to some of my favorite songs!</p>
+
+    <div class="record-player">
+      <div class="player-body">
+        <div class="platter"></div>
+        <div class="tone-arm"></div>
+      </div>
+      <div class="player-controls">
+        <button class="player-btn skip-back" type="button">«15</button>
+        <button class="player-btn play-pause" type="button">▶</button>
+        <button class="player-btn skip-forward" type="button">15»</button>
+      </div>
+      <p class="now-playing-label"></p>
+    </div>
+  </section>
+
+  <script>
+    let currentAudio = null;
+    
+    window.addEventListener('scroll', function() {
+      const parallaxBg = document.querySelector('.parallax-background');
+      const scrollPosition = window.scrollY;
+      // Move background up (negative value) as user scrolls down
+      parallaxBg.style.transform = `translateY(${scrollPosition * 0.5}px)`;
+    });
+
+    // Drag and drop functionality for records
+    const recordCards = document.querySelectorAll('.record-card');
+    const recordPlayer = document.querySelector('.record-player');
+    const platter = document.querySelector('.platter');
+    const nowPlayingLabel = document.querySelector('.now-playing-label');
+    const skipBackButton = document.querySelector('.skip-back');
+    const playPauseButton = document.querySelector('.play-pause');
+    const skipForwardButton = document.querySelector('.skip-forward');
+    const playerControls = document.querySelector('.player-controls');
+    const albumCoverDisplay = document.querySelector('.album-cover-display');
+    const albumArt = document.querySelector('.album-art');
+    const coverTitle = document.querySelector('.cover-title');
+    const coverArtist = document.querySelector('.cover-artist');
+    const instructionText = document.querySelector('.instruction-text');
+    const instructionCloud = document.querySelector('.instruction-cloud');
+    let currentlyPlaying = null;
+    let hasPlayedAny = false;
+
+    playerControls.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+    playerControls.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+    
+    recordCards.forEach((card, index) => {
+      let isDragging = false;
+      let startX, startY;
+      let offsetX = 0, offsetY = 0;
+      
+      card.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        card.style.cursor = 'grabbing';
+        card.style.transition = 'none';
+        card.style.zIndex = '100';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          offsetX = e.clientX - startX;
+          offsetY = e.clientY - startY;
+          card.style.transform = `translateY(-12px) translate(${offsetX}px, ${offsetY}px)`;
+        }
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (isDragging) {
+          isDragging = false;
+          card.style.cursor = 'pointer';
+          
+          // Check if dropped on record player
+          const playerRect = recordPlayer.getBoundingClientRect();
+          const cardRect = card.getBoundingClientRect();
+          const distance = Math.hypot(
+            playerRect.left + playerRect.width/2 - (cardRect.left + cardRect.width/2),
+            playerRect.top + playerRect.height/2 - (cardRect.top + cardRect.height/2)
+          );
+          
+          if (distance < 200) {
+            // Dropped on player - snap to player
+            currentlyPlaying = {
+              index: index,
+              title: card.querySelector('.record-label').textContent,
+              coverTitle: card.dataset.coverTitle,
+              coverArtist: card.dataset.coverArtist,
+              coverImage: card.dataset.coverImage,
+              card: card,
+              url: card.dataset.audio
+            };
+            updatePlayerDisplay();
+            card.style.transform = 'translateY(-12px) translate(0, 0)';
+          } else {
+            // Not on player - return to original position
+            card.style.transition = 'transform 0.4s ease-out';
+            card.style.transform = 'translateY(-12px)';
+          }
+          
+          card.style.zIndex = '1';
+          offsetX = 0;
+          offsetY = 0;
+        }
+      });
+    });
+    
+    function updatePlayerDisplay() {
+      if (currentlyPlaying) {
+        platter.classList.add('playing-vinyl');
+        platter.dataset.vinylIndex = currentlyPlaying.index;
+        nowPlayingLabel.textContent = currentlyPlaying.title;
+        nowPlayingLabel.classList.add('active');
+        // Hide the record card from sidebar using opacity instead of display
+        currentlyPlaying.card.style.opacity = '0';
+        currentlyPlaying.card.style.pointerEvents = 'none';
+        // Hide the instruction text and cloud permanently after first play
+        hasPlayedAny = true;
+        instructionText.classList.add('hidden');
+        instructionCloud.classList.add('hidden');
+        // Show the album cover
+        albumCoverDisplay.classList.add('active');
+        albumArt.style.backgroundImage = currentlyPlaying.coverImage ? `url('${currentlyPlaying.coverImage}')` : currentlyPlaying.coverGradient || 'none';
+        albumArt.style.backgroundColor = currentlyPlaying.coverImage ? 'transparent' : '#7c2f3d';
+        albumArt.style.backgroundSize = 'cover';
+        albumArt.style.backgroundPosition = 'center';
+        coverTitle.textContent = currentlyPlaying.coverTitle || currentlyPlaying.title;
+        coverArtist.textContent = currentlyPlaying.coverArtist || '';
+        // Play the associated song
+        playAudio(currentlyPlaying.url);
+      } else {
+        albumCoverDisplay.classList.remove('active');
+        platter.classList.remove('playing-vinyl');
+        nowPlayingLabel.textContent = '';
+        nowPlayingLabel.classList.remove('active');
+        // Only show instruction text and cloud if no vinyl has been played yet
+        if (!hasPlayedAny) {
+          instructionText.classList.remove('hidden');
+          instructionCloud.classList.remove('hidden');
+        }
+        // Show all record cards again using opacity
+        recordCards.forEach(card => {
+          card.style.opacity = '1';
+          card.style.pointerEvents = 'auto';
+        });
+        // Stop the current song
+        stopSong();
+      }
+    }
+    
+    function playAudio(url) {
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+      
+      // Create and play new audio
+      currentAudio = new Audio(url);
+      currentAudio.play().catch(err => {
+        console.log('Audio playback failed:', err);
+      });
+      
+      // When song ends, stop playing
+      currentAudio.addEventListener('ended', () => {
+        if (currentlyPlaying && currentlyPlaying.url === url) {
+          // Auto-eject after song ends
+          currentlyPlaying = null;
+          updatePlayerDisplay();
+        }
+      }, { once: true });
+
+      currentAudio.addEventListener('play', updateControlState);
+      currentAudio.addEventListener('pause', updateControlState);
+      updateControlState();
+    }
+    
+    function stopSong() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+      updateControlState();
+    }
+
+    function updateControlState() {
+      const hasAudio = !!currentAudio && currentlyPlaying;
+      const isPlaying = hasAudio && !currentAudio.paused;
+
+      skipBackButton.disabled = !hasAudio;
+      skipForwardButton.disabled = !hasAudio;
+      playPauseButton.disabled = !hasAudio;
+
+      if (hasAudio) {
+        playPauseButton.textContent = isPlaying ? '▮▮' : '▶';
+      } else {
+        playPauseButton.textContent = '▶';
+      }
+    }
+
+    skipBackButton.addEventListener('click', () => {
+      if (currentAudio) {
+        currentAudio.currentTime = Math.max(0, currentAudio.currentTime - 15);
+      }
+    });
+
+    skipForwardButton.addEventListener('click', () => {
+      if (currentAudio && !isNaN(currentAudio.duration)) {
+        currentAudio.currentTime = Math.min(currentAudio.duration, currentAudio.currentTime + 15);
+      }
+    });
+
+    playPauseButton.addEventListener('click', () => {
+      if (!currentAudio) return;
+      if (currentAudio.paused || currentAudio.ended) {
+        currentAudio.play().catch(err => {
+          console.log('Audio playback failed:', err);
+        });
+      } else {
+        currentAudio.pause();
+      }
+      updateControlState();
+    });
+    
+    // Allow dragging from player to eject record
+    let playerDragging = false;
+    let playerDragStart = { x: 0, y: 0 };
+    let cardOffset = { x: 0, y: 0 };
+    
+    recordPlayer.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.player-controls')) {
+        return;
+      }
+
+      if (currentlyPlaying) {
+        playerDragging = true;
+        playerDragStart.x = e.clientX;
+        playerDragStart.y = e.clientY;
+        recordPlayer.style.cursor = 'grabbing';
+        
+        // Show the record card
+        currentlyPlaying.card.style.opacity = '1';
+        currentlyPlaying.card.style.pointerEvents = 'auto';
+        currentlyPlaying.card.style.zIndex = '100';
+        currentlyPlaying.card.style.transition = 'none';
+        
+        // Calculate where the card currently is vs where it should be (at cursor)
+        const cardRect = currentlyPlaying.card.getBoundingClientRect();
+        const playerRect = recordPlayer.getBoundingClientRect();
+        
+        // Position the card to appear at the player's center
+        cardOffset.x = playerRect.left + playerRect.width/2 - cardRect.left - cardRect.width/2;
+        cardOffset.y = playerRect.top + playerRect.height/2 - cardRect.top - cardRect.height/2;
+        
+        currentlyPlaying.card.style.transform = `translateY(-12px) translate(${cardOffset.x}px, ${cardOffset.y}px)`;
+        
+        // Return platter to cream state and stop music, and clear the label text immediately
+        platter.classList.remove('playing-vinyl');
+        nowPlayingLabel.textContent = '';
+        nowPlayingLabel.classList.remove('active');
+        stopSong();
+      }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (playerDragging && currentlyPlaying) {
+        const offsetX = e.clientX - playerDragStart.x + cardOffset.x;
+        const offsetY = e.clientY - playerDragStart.y + cardOffset.y;
+        currentlyPlaying.card.style.transform = `translateY(-12px) translate(${offsetX}px, ${offsetY}px)`;
+      }
+    });
+    
+    document.addEventListener('mouseup', (e) => {
+      if (playerDragging && currentlyPlaying) {
+        playerDragging = false;
+        recordPlayer.style.cursor = 'auto';
+        currentlyPlaying.card.style.transition = 'transform 0.4s ease-out';
+        
+        // Check if dropped back on player
+        const playerRect = recordPlayer.getBoundingClientRect();
+        const cardRect = currentlyPlaying.card.getBoundingClientRect();
+        const distance = Math.hypot(
+          playerRect.left + playerRect.width/2 - (cardRect.left + cardRect.width/2),
+          playerRect.top + playerRect.height/2 - (cardRect.top + cardRect.height/2)
+        );
+        
+        if (distance < 200) {
+          // Dropped back on player - play again
+          currentlyPlaying.card.style.zIndex = '1';
+          currentlyPlaying.card.style.transform = 'translateY(-12px) translate(0, 0)';
+          platter.classList.add('playing-vinyl');
+          nowPlayingLabel.classList.add('active');
+          currentlyPlaying.card.style.opacity = '0';
+          currentlyPlaying.card.style.pointerEvents = 'none';
+          cardOffset = { x: 0, y: 0 };
+          playAudio(currentlyPlaying.url);
+        } else {
+          // Not on player - return to original position
+          currentlyPlaying.card.style.zIndex = '1';
+          currentlyPlaying.card.style.transform = 'translateY(-12px) translate(0, 0)';
+          currentlyPlaying = null;
+          cardOffset = { x: 0, y: 0 };
+          updatePlayerDisplay();
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
