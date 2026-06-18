@@ -48,6 +48,10 @@
       </div>
 
     </section>
+
+    <div class="music-button-wrap">
+      <button class="music-button" type="button">My Music ♫</button>
+    </div>
   </main>
 
   <section class="records-section">
@@ -110,7 +114,16 @@
 
   <script>
     let currentAudio = null;
-    
+
+    // Reveal the records section when "My Music" is clicked
+    const musicButton = document.querySelector('.music-button');
+    const recordsSectionEl = document.querySelector('.records-section');
+
+    musicButton.addEventListener('click', () => {
+      recordsSectionEl.classList.add('revealed');
+      recordsSectionEl.scrollIntoView({ behavior: 'smooth' });
+    });
+
     window.addEventListener('scroll', function() {
       const parallaxBg = document.querySelector('.parallax-background');
       const scrollPosition = window.scrollY;
