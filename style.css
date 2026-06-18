@@ -105,16 +105,54 @@ h1 {
   transform: translateY(0);
 }
 
+/* My Music button */
+.music-button-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 44px;
+}
+
+.music-button {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  letter-spacing: 0.04em;
+  color: #fff6e8;
+  background-color: #7b1e32;
+  border: 3px solid #4b0f1e;
+  border-radius: 18px;
+  padding: 16px 44px;
+  cursor: pointer;
+  box-shadow:
+    6px 6px 0 #4b0f1e,
+    10px 10px 18px rgba(0, 0, 0, 0.22);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.music-button:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow:
+    6px 18px 0 #4b0f1e,
+    10px 26px 28px rgba(0, 0, 0, 0.3);
+}
+
+.music-button:active {
+  transform: translateY(-4px) scale(1.01);
+}
+
 /* Records Section with Parallax */
 .records-section {
   position: relative;
   min-height: 100vh;
-  display: flex;
+  display: none;
   justify-content: space-around;
   align-items: center;
   overflow: hidden;
   padding: 0 40px;
   background: linear-gradient(180deg, #f7ecd6 0%, #fff9f2 40%, #ffffff 100%);
+}
+
+.records-section.revealed {
+  display: flex;
 }
 
 .album-cover-display {
